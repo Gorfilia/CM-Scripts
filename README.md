@@ -4,7 +4,7 @@ CM-Scripts
 Various scripts for "CroqueMonster"
 
 
-#MonstroValue
+##MonstroValue
 To see must eseaily value's monster
 
 ##MonstroFart
