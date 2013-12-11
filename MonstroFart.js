@@ -8,7 +8,13 @@
 // ==/UserScript==
 
 var Monsters = [];
-
+/**
+* Function to create html element
+* @return HTMLElement
+* */
+function element(name) {
+	return document.createElement(name);
+}
 /**
 * Constructor
 **/
@@ -38,8 +44,9 @@ Frame.prototype = {
 		this.body.appendChild(htmlElement);
 		
 		htmlElement.style.position = 'relative';
-		htmlElement.style.top = '50%';
+		htmlElement.style.top = '20%';
 		htmlElement.style.margin = 'auto';
+		htmlElement.style.backgroundColor = "grey";
 	},
 	removeAll: function() {
 		while(this.elements.length > 0) {
@@ -60,7 +67,7 @@ function createHTMLList(list) {
 	var ul = window.document.createElement("ul");
 	for(var i in list) {
 		var li = window.document.createElement("li");
-		li.innerHTML = String(list[i]);
+		li.innerHTML = list[i].toString();
 		ul.appendChild(li);
 	}
 	ul.style.position ="fixed";
@@ -75,11 +82,12 @@ function linkToFart(link) {
 
 function callback(data) {
 	var success = data.querySelector("div[class=content] a:last-child"),
-	monster = window.document.querySelector(".noMarg").firstChild.textContent.substring(8);
-	if(success)
-		Monsters.push({monster : " Fart" });
-	else
-		Monsters.push({monster : " - " });
+	monster = data.querySelector("h1.noMarg").firstChild.textContent.substring(8),
+	tmp = {name : monster, fart : '-', toString: function(){ return this.name+':'+this.fart;}};
+	if(success) {
+			tmp.fart = 'Fart';
+	}
+	Monsters.push(tmp);
 }
 
 function fart(url) {
@@ -87,15 +95,25 @@ function fart(url) {
 	xhr.open('GET', url, true);
 	xhr.responseType = "document";
 	xhr.onreadystatechange = function(e) {
-			if (this.readyState == 4) {
-					if(this.status == 200) {
-							callback(this.responseXML);
-					}
-					else
-							callback(this.responseXML);
+		if (this.readyState == 4) {
+			if(this.status == 200) {
+				callback(this.responseXML);
 			}
+			// else
+				// callback(this.responseXML);
+		}
+		checkMonster();
 	};
 	xhr.send();
+}
+
+function checkMonster() {
+	if(Monsters.length == 10) {
+		var list = createHTMLList(Monsters), f = new Frame();
+		f.add(list);
+		f.show();
+		setTimeout(function(){f.hide(); f.removeAll()}, 5000);
+	} 
 }
 
 //get title & create button
@@ -108,13 +126,9 @@ button.innerHTML = 'Fart';
 button.onclick = function(e) {
 	for(var i in monstersLink) {
 		(function(preLink) {
-				var link = linkToFart(preLink);
+			var link = linkToFart(preLink);
 			if(link != "")
 				fart(link);
-			if(Monsters.length == 10) {
-				var list = createHTMLList(Monsters), frame = new Frame;
-				frame.add(list);
-			}
 		})(monstersLink[i]);
 	}
 };
