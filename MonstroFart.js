@@ -19,10 +19,18 @@ function element(name) {
 * Constructor
 **/
 function Frame() {
-	this.body = element('div');
+	this.body = window.document.createElement('div');
 	this.elements = [];
 
 	document.body.appendChild(this.body);
+    
+    this.button = window.document.createElement('button');
+    this.button.textContent ='close';
+    var self= this;
+    this.button.onclick = function(e) {
+        self.hide.apply(self);
+    }
+	this.body.appendChild(this.button);
 
 	this.body.style.position = 'fixed';
 	this.body.style.top = '25%';
@@ -65,7 +73,7 @@ Frame.prototype = {
 
 function createHTMLList(list) {
 	var ul = window.document.createElement("ul");
-	for(var i in list) {
+	for(var i = 0; i < list.length; i++) {
 		var li = window.document.createElement("li");
 		li.innerHTML = list[i].toString();
 		ul.appendChild(li);
@@ -112,7 +120,7 @@ function checkMonster() {
 		var list = createHTMLList(Monsters), f = new Frame();
 		f.add(list);
 		f.show();
-		setTimeout(function(){f.hide(); f.removeAll()}, 5000);
+		//setTimeout(function(){f.hide(); f.removeAll()}, 5000);
 	} 
 }
 
