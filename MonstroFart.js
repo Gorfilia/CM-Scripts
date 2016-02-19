@@ -6,140 +6,120 @@
 // @include     http://www.croquemonster.com/monster
 // @copyright  2012+, You
 // ==/UserScript==
+// Main popup
+var popup = document.createElement('div');
 
-var Monsters = [];
-/**
-* Function to create html element
-* @return HTMLElement
-* */
-function element(name) {
-	return document.createElement(name);
-}
-/**
-* Constructor
-**/
-function Frame() {
-	this.body = window.document.createElement('div');
-	this.elements = [];
-
-	document.body.appendChild(this.body);
-    
-    this.button = window.document.createElement('button');
-    this.button.textContent ='close';
-    var self= this;
-    this.button.onclick = function(e) {
-        self.hide.apply(self);
-    }
-	this.body.appendChild(this.button);
-
-	this.body.style.position = 'fixed';
-	this.body.style.top = '25%';
-	this.body.style.left = '25%';
-
-	this.body.style.height = '50%';
-	this.body.style.width = '50%';
-	this.body.style.margin = 'auto';
-
-	this.body.style.backgroundColor = 'black';
-	this.body.style.opacity = '0.9';
-
-	this.body.style.textAlign = "center";
-}
-
-Frame.prototype = {
-	add: function(htmlElement) {
-		this.elements.push(htmlElement);
-		this.body.appendChild(htmlElement);
-		
-		htmlElement.style.position = 'relative';
-		htmlElement.style.top = '20%';
-		htmlElement.style.margin = 'auto';
-		htmlElement.style.backgroundColor = "grey";
-	},
-	removeAll: function() {
-		while(this.elements.length > 0) {
-			this.elements.pop();
-			this.body.removeChild(this.body.lastChild);
-		}
-	},
-	
-	show: function() {
-		this.body.style.display = 'inline';
-	},
-	hide: function() {
-		this.body.style.display = 'none';
-	}
+popup.onclick = function(e) {
+	popup.style.display = 'none';
 };
 
-function createHTMLList(list) {
-	var ul = window.document.createElement("ul");
-	for(var i = 0; i < list.length; i++) {
-		var li = window.document.createElement("li");
-		li.innerHTML = list[i].toString();
-		ul.appendChild(li);
+// Button for display popup
+button = window.document.createElement("button");
+button.textContent = 'Fart';
+button.onclick = function(e) {
+	popup.style.display = 'block';
+	monsters.forEach(function(current, index, array) {
+		current.fart();
+	});
+};
+
+// Content of popup
+var table = document.createElement('table');
+
+// Content of table
+var titles = document.createElement('thead'), tbody = document.createElement('tbody');
+tbody.style.color = 'black';
+
+// Items of titles
+var tr = document.createElement('tr'), thName = document.createElement('th'), thFart = document.createElement('th');
+thName.textContent = 'Name';
+thFart.textContent = 'Fart';
+
+// Fill body of table
+function fillBody(monsters) {
+	var i = 0;
+	for(i; i < monsters.length; i++) {
+		var tdName = document.createElement('td'), tdFart = document.createElement('td'), tr = document.createElement('tr');
+		tdName.textContent = monsters[i].name;
+		tdFart.textContent = (monsters[i].isFart) ? 'ok' : 'ko';
+		tr.appendChild(tdName);
+		tr.appendChild(tdFart);
+		// reference for replace line - to do another place ?
+		monsters[i].HTMLLine = tr;
+		tbody.appendChild(tr);
 	}
-	ul.style.position ="fixed";
-	ul.style.top = 0;
-	return ul;
-}
-        
-//get path to fart
-function linkToFart(link) {
-	return (link.href == undefined)? "" : link.href+'/fart';
 }
 
-function callback(data) {
-	var success = data.querySelector("div[class=content] a:last-child"),
-	monster = data.querySelector("h1.noMarg").firstChild.textContent.substring(8),
-	tmp = {name : monster, fart : '-', toString: function(){ return this.name+':'+this.fart;}};
-	if(success) {
-			tmp.fart = 'Fart';
-	}
-	Monsters.push(tmp);
-}
+// Manage monsters
+var monsters = [];
 
-function fart(url) {
-	var xhr = new XMLHttpRequest();
+function Monster(id, name) {
+	this.id = id;
+	this.name = name;
+	this.isFart = false;
+	this.HTMLLine = null;
+}
+Monster.prototype.fart = function() {
+	var xhr = new XMLHttpRequest(), url = 'http://www.croquemonster.com/monster/' + this.id + '/fart', self = this;
+
 	xhr.open('GET', url, true);
-	xhr.responseType = "document";
+	/* xhr.responseType = "document"; */
+	xhr.overrideMimeType('text/xml');
 	xhr.onreadystatechange = function(e) {
 		if (this.readyState == 4) {
 			if(this.status == 200) {
-				callback(this.responseXML);
+				// Manage return and replace line in tbody
+				self.isFart = !this.responseXML.documentElement.querySelector('a[href$="/fart"');
+				self.HTMLLine.lastChild.textContent = (self.isFart) ? 'ok' : 'ko';
 			}
-			// else
-				// callback(this.responseXML);
 		}
-		checkMonster();
 	};
 	xhr.send();
 }
 
-function checkMonster() {
-	if(Monsters.length == 10) {
-		var list = createHTMLList(Monsters), f = new Frame();
-		f.add(list);
-		f.show();
-		//setTimeout(function(){f.hide(); f.removeAll()}, 5000);
-	} 
+// Get monsters
+var monstersLink = window.document.querySelectorAll("h3>a"), i = 0;
+
+for(i; i < monstersLink.length; i++) {
+	var name, id;
+	name = monstersLink[i].textContent;
+	id = monstersLink[i].href.match(/[0-9]+$/)[0];
+
+	var monster = new Monster(id, name);
+	monsters.push(monster);
 }
 
-//get title & create button
-var h1 = window.document.querySelector("h1[class=noMarg]"),
-	monstersLink = window.document.querySelectorAll("h3>a"),
-	button = window.document.createElement("button");
+fillBody(monsters);
 
-//customize button
-button.innerHTML = 'Fart';
-button.onclick = function(e) {
-	for(var i in monstersLink) {
-		(function(preLink) {
-			var link = linkToFart(preLink);
-			if(link != "")
-				fart(link);
-		})(monstersLink[i]);
-	}
-};
+// Attachment
+tr.appendChild(thName);
+tr.appendChild(thFart);
 
-//add button in title
+titles.appendChild(tr);
+
+table.appendChild(titles);
+table.appendChild(tbody);
+
+popup.appendChild(table);
+
+document.body.appendChild(popup);
+
+// Get button for attachment of button
+var h1 = window.document.querySelector("h1[class=noMarg]");
 h1.appendChild(button);
+
+// Style definition
+popup.className = 'summary-fart';
+popup.style.display = 'none';
+popup.style.position = 'fixed';
+popup.style.top = 0;
+popup.style.left = 0;
+popup.style.width = '100%';
+popup.style.height = '100%';
+popup.style.paddingTop = '10%';
+
+table.style.width = '50%';
+table.style.marginLeft = 'auto';
+table.style.marginRight = 'auto';
+table.style.backgroundColor = '#1c5059';
+table.style.textAlign = 'center';
