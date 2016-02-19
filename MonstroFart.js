@@ -1,9 +1,8 @@
 // ==UserScript==
 // @name       Fart
 // @namespace  croqueScript
-// @version    0.1
+// @version    0.2
 // @description  script for all monsters fart in croquemonster
-// @include     http://www.croquemonster.com/monster
 // @copyright  2012+, You
 // ==/UserScript==
 // Main popup
