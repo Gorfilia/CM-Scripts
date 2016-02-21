@@ -74,18 +74,15 @@ Monster.prototype.fart = function() {
 		}
 	};
 	xhr.send();
-}
+};
 
 // Get monsters
-var monstersLink = window.document.querySelectorAll("h3>a"), i = 0;
-
+var monstersLink = window.document.querySelectorAll("h3>a"), i = 0, name, id;
 for(i; i < monstersLink.length; i++) {
-	var name, id;
 	name = monstersLink[i].textContent;
 	id = monstersLink[i].href.match(/[0-9]+$/)[0];
 
-	var monster = new Monster(id, name);
-	monsters.push(monster);
+	monsters.push(new Monster(id, name));
 }
 
 fillBody(monsters);
