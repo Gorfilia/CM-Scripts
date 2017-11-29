@@ -1,121 +1,186 @@
 // ==UserScript==
 // @name       Fart
 // @namespace  croqueScript
-// @version    0.2
+// @version    0.3
 // @description  script for all monsters fart in croquemonster
 // @copyright  2012+, You
 // ==/UserScript==
-// Main popup
-var popup = document.createElement('div');
+(function(doc) {
+    class Monster {
+        constructor(id, name) {
+            this.id = id;
+            this.name = name;
+            this.isFart = false;
+            this.HTMLLine = null;
+        }
 
-popup.onclick = function(e) {
-	popup.style.display = 'none';
-};
+        fart() {
+            const url = `http://www.croquemonster.com/monster/${this.id}/fart`,
+            xhr = new XMLHttpRequest(),
+            self = this;
 
-// Button for display popup
-button = window.document.createElement("button");
-button.textContent = 'Fart';
-button.onclick = function(e) {
-	popup.style.display = 'block';
-	monsters.forEach(function(current, index, array) {
-		current.fart();
-	});
-};
+            xhr.open('GET', url, true);
+            xhr.overrideMimeType('text/xml');
 
-// Content of popup
-var table = document.createElement('table');
+            xhr.onreadystatechange = function(e) {
+                if (this.readyState == 4) {
+                    if(this.status == 200) {
+                        // Manage return and replace line in tbody
+                        self.isFart = !this.responseXML.documentElement.querySelector('a[href$="/fart"');
+                        self.HTMLLine.lastChild.textContent = (self.isFart) ? 'ok' : 'ko';
+                    }
+                }
+            };
 
-// Content of table
-var titles = document.createElement('thead'), tbody = document.createElement('tbody');
-tbody.style.color = 'black';
+            xhr.send();
+        }
+    };
 
-// Items of titles
-var tr = document.createElement('tr'), thName = document.createElement('th'), thFart = document.createElement('th');
-thName.textContent = 'Name';
-thFart.textContent = 'Fart';
+    class Main {
+        constructor(doc) {
+            var document = doc;
+            this.initUI();
+            this.initStyle();
+            this.initMonsters();
 
-// Fill body of table
-function fillBody(monsters) {
-	var i = 0;
-	for(i; i < monsters.length; i++) {
-		var tdName = document.createElement('td'), tdFart = document.createElement('td'), tr = document.createElement('tr');
-		tdName.textContent = monsters[i].name;
-		tdFart.textContent = (monsters[i].isFart) ? 'ok' : 'ko';
-		tr.appendChild(tdName);
-		tr.appendChild(tdFart);
-		// reference for replace line - to do another place ?
-		monsters[i].HTMLLine = tr;
-		tbody.appendChild(tr);
-	}
-}
+            this.createTitleOfTable();
+            this.fillBodyOfTable(this.monsters);
+            this.listener();
+        }
 
-// Manage monsters
-var monsters = [];
+        initMonsters() {
+            // Manage monsters
+            this.monsters = [];
 
-function Monster(id, name) {
-	this.id = id;
-	this.name = name;
-	this.isFart = false;
-	this.HTMLLine = null;
-}
-Monster.prototype.fart = function() {
-	var xhr = new XMLHttpRequest(), url = 'http://www.croquemonster.com/monster/' + this.id + '/fart', self = this;
+            // Get monsters
+            const monstersLink = document.querySelectorAll("h3>a");
+            let i = 0, name, id;
+            for(i; i < monstersLink.length; i++) {
+                name = monstersLink[i].textContent;
+                id = monstersLink[i].href.match(/[0-9]+$/)[0];
 
-	xhr.open('GET', url, true);
-	/* xhr.responseType = "document"; */
-	xhr.overrideMimeType('text/xml');
-	xhr.onreadystatechange = function(e) {
-		if (this.readyState == 4) {
-			if(this.status == 200) {
-				// Manage return and replace line in tbody
-				self.isFart = !this.responseXML.documentElement.querySelector('a[href$="/fart"');
-				self.HTMLLine.lastChild.textContent = (self.isFart) ? 'ok' : 'ko';
-			}
-		}
-	};
-	xhr.send();
-};
+                this.monsters.push(new Monster(id, name));
+            }
 
-// Get monsters
-var monstersLink = window.document.querySelectorAll("h3>a"), i = 0, name, id;
-for(i; i < monstersLink.length; i++) {
-	name = monstersLink[i].textContent;
-	id = monstersLink[i].href.match(/[0-9]+$/)[0];
+            return this;
+        }
 
-	monsters.push(new Monster(id, name));
-}
+        initUI() {
+            // Create table
+            this.popup = document.createElement('div');
+            this.createEmptyTable();
+            this.popup.appendChild(this.table);
+            document.body.appendChild(this.popup);
 
-fillBody(monsters);
+            // Create button
+            this.createButton();
+            const h1 = window.document.querySelector("h1[class=noMarg]");
+            h1.appendChild(this.button);
 
-// Attachment
-tr.appendChild(thName);
-tr.appendChild(thFart);
+            return this;
+        }
 
-titles.appendChild(tr);
+        initStyle() {
+            this.popup.className = 'summary-fart';
+            this.popup.style.display = 'none';
+            this.popup.style.position = 'fixed';
+            this.popup.style.top = 0;
+            this.popup.style.left = 0;
+            this.popup.style.width = '100%';
+            this.popup.style.height = '100%';
+            this.popup.style.paddingTop = '10%';
 
-table.appendChild(titles);
-table.appendChild(tbody);
+            this.table.style.width = '50%';
+            this.table.style.marginLeft = 'auto';
+            this.table.style.marginRight = 'auto';
+            this.table.style.backgroundColor = '#1c5059';
+            this.table.style.textAlign = 'center';
 
-popup.appendChild(table);
+            this.tbody.style.color = 'black';
+            return this;
+        }
 
-document.body.appendChild(popup);
+        listener() {
+            const self = this;
 
-// Get button for attachment of button
-var h1 = window.document.querySelector("h1[class=noMarg]");
-h1.appendChild(button);
+            this.popup.addEventListener('click', this.changeDisplay, false);
 
-// Style definition
-popup.className = 'summary-fart';
-popup.style.display = 'none';
-popup.style.position = 'fixed';
-popup.style.top = 0;
-popup.style.left = 0;
-popup.style.width = '100%';
-popup.style.height = '100%';
-popup.style.paddingTop = '10%';
+            this.button.addEventListener('click', () => {
+                this.popup.dispatchEvent(new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                }));
 
-table.style.width = '50%';
-table.style.marginLeft = 'auto';
-table.style.marginRight = 'auto';
-table.style.backgroundColor = '#1c5059';
-table.style.textAlign = 'center';
+                this.monsters.forEach(function(current, index, array) {
+                    current.fart();
+                });
+            });
+        }
+
+        changeDisplay(evt) {
+            evt.currentTarget.style.display = (evt.currentTarget.style.display == 'none') ? 'block' : 'none';
+        }
+
+        fillBodyOfTable(monsters) {
+            this.removeAllChild(this.tbody);
+
+            for(let i = 0; i < monsters.length; i++) {
+                const tdName = document.createElement('td'), tdFart = document.createElement('td'), tr = document.createElement('tr');
+                tdName.textContent = monsters[i].name;
+                tdFart.textContent = (monsters[i].isFart) ? 'ok' : 'ko';
+                tr.appendChild(tdName);
+                tr.appendChild(tdFart);
+
+                monsters[i].HTMLLine = tr;
+                this.tbody.appendChild(tr);
+            }
+
+            return this;
+        }
+
+        createTitleOfTable() {
+            // Items of titles
+            const tr = document.createElement('tr'), thName = document.createElement('th'), thFart = document.createElement('th');
+            thName.textContent = 'Name';
+            thFart.textContent = 'Fart';
+
+            // Attachment
+            tr.appendChild(thName);
+            tr.appendChild(thFart);
+            this.titles.appendChild(tr);
+
+            return this;
+        }
+
+        createEmptyTable() {
+            this.table = document.createElement('table');
+
+            this.titles = document.createElement('thead');
+            this.tbody = document.createElement('tbody');
+
+            this.table.appendChild(this.titles);
+            this.table.appendChild(this.tbody);
+
+            return this;
+        }
+
+        createButton() {
+            // Button for display popup
+            this.button = document.createElement("button");
+            this.button.textContent = 'Fart';
+
+            return this;
+        }
+
+        removeAllChild(element) {
+            while (element.hasChildNodes()) {
+                element.removeChild(element.firstChild);
+            }
+
+            return this;
+        }
+    };
+
+    new Main(doc);
+})(window.document);
