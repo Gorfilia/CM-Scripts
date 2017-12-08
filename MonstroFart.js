@@ -4,6 +4,7 @@
 // @version    0.3
 // @description  script for all monsters fart in croquemonster
 // @copyright  2012+, You
+// @include http://www.croquemonster.com/monster
 // ==/UserScript==
 (function(doc) {
     class Monster {
@@ -34,7 +35,7 @@
 
             xhr.send();
         }
-    };
+    }
 
     class Main {
         constructor(doc) {
@@ -109,7 +110,6 @@
                 this.popup.dispatchEvent(new MouseEvent("click", {
                     bubbles: true,
                     cancelable: true,
-                    view: window,
                 }));
 
                 this.monsters.forEach(function(current, index, array) {
@@ -180,7 +180,7 @@
 
             return this;
         }
-    };
+    }
 
     new Main(doc);
 })(window.document);
